@@ -103,15 +103,6 @@ function draw(){
         var x = (targDistSlider.value()/2 * Math.cos(ang)) + w/2;
         var y = (targDistSlider.value()/2 * Math.sin(ang)) + h/2;
         
-        // show images
-        // stroke(gry)
-        // line(x, y, donkey.x, donkey.y);
-        // push();
-        // push();
-        // imageMode(CENTER)
-        // image(blueT, x, y, tDims[0], tDims[1])
-        // pop();
-
         // push the distances to a list
         targs.push(dist(x, y, donkey.x, donkey.y));
         targX.push(x);
@@ -129,12 +120,6 @@ function draw(){
                 var tempCol = [];
                 for(let i = 0; i < targs.length; i++){
                     tempCol.push(ExpectedAcc(dist(x, y, targX[i], targY[i])));
-                    // push();
-                    // strokeWeight(15);
-                    // colorMode(HSB);
-                    // stroke(map(ExpectedAcc(distance), 0, 1, 0, 80), h, h);
-                    // point(x, y)
-                    // pop();
                 }
                 var tempAcc = tempCol.reduce(function(a, b){return a + b})/tempCol.length;
                 push()
