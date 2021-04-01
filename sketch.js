@@ -16,6 +16,8 @@ var minTargs = 2;
 var maxTargs = 15; 
 var steps = 360/minTargs;
 var targs = [];
+var targX = [];
+var targY = [];
 var expAccs = [];
 var minDist = h*.15;
 var maxDist = h*.75;
@@ -23,6 +25,8 @@ var stepDist = h*.01
 
 // target placement information
 var areaR = maxDist;
+var cWbound = (w - areaR)/2;
+var cHbound = (h - areaR)/2;
 
 // Donkey 
 var donkey;
@@ -76,6 +80,8 @@ function draw(){
     
     // refresh target list in case there's a change 
     targs = [];
+    targX = [];
+    targY = [];
     expAccs = [];
 
     // slider title
@@ -87,11 +93,8 @@ function draw(){
     text("Delta (\u0394)", w*.02, h*.08);
 
     noFill();
-    var mouseDist = dist(w/2, h/2, mouseX, mouseY);
     stroke(blk);
     ellipse(w/2, h/2, areaR);
-
-
 
     steps = 360/numTargSlider.value();
     for(let i = 0; i < numTargSlider.value(); i++){
@@ -101,18 +104,79 @@ function draw(){
         var y = (targDistSlider.value()/2 * Math.sin(ang)) + h/2;
         
         // show images
-        stroke(gry)
-        line(x, y, donkey.x, donkey.y);
-        push();
-        push();
-        imageMode(CENTER)
-        image(blueT, x, y, tDims[0], tDims[1])
-        pop();
+        // stroke(gry)
+        // line(x, y, donkey.x, donkey.y);
+        // push();
+        // push();
+        // imageMode(CENTER)
+        // image(blueT, x, y, tDims[0], tDims[1])
+        // pop();
 
         // push the distances to a list
         targs.push(dist(x, y, donkey.x, donkey.y));
+        targX.push(x);
+        targY.push(y);
         expAccs.push(ExpectedAcc(targs[i]));
     }
+
+    
+    // loop through all points in the cirle
+    // colour each point based on expAcc
+    for(let x = cWbound; x < w - cWbound; x+=15){
+        for(let y = cHbound; y < h-cHbound; y+=15){
+            var distance = dist(x, y, w/2, h/2);
+            if(distance < areaR/2){
+                var tempCol = [];
+                for(let i = 0; i < targs.length; i++){
+                    tempCol.push(ExpectedAcc(dist(x, y, targX[i], targY[i])));
+                    // push();
+                    // strokeWeight(15);
+                    // colorMode(HSB);
+                    // stroke(map(ExpectedAcc(distance), 0, 1, 0, 80), h, h);
+                    // point(x, y)
+                    // pop();
+                }
+                var tempAcc = tempCol.reduce(function(a, b){return a + b})/tempCol.length;
+                push()
+                colorMode(HSB);
+                strokeWeight(15);
+                stroke(map(tempAcc, 0, 1, 0, 300), 90, 80);
+                point(x, y);
+                pop();
+            }
+        }
+    }
+
+    for(let i = 0; i < targs.length; i++){
+        // show images
+        stroke(gry)
+        line(targX[i], targY[i], donkey.x, donkey.y);
+        push();
+        push();
+        imageMode(CENTER)
+        image(blueT, targX[i], targY[i], tDims[0], tDims[1])
+        pop();
+    }
+
+    // draw a scale 
+    for(let i = 0; i < 101; i++){
+        push();
+        colorMode(HSB);
+        noStroke();
+        fill(map(i, 0, 100, 0, 300), 90, 90);
+        rect(w*.25 + i*((w*.5)/100), h*.05, (w*.5)/100, 10);
+        pop();
+    }
+    push();
+    noStroke();
+    fill(blk);
+    textAlign(CENTER, CENTER);
+    text("Probability of Reaching Target", w/2, h*.025)
+    textAlign(LEFT, CENTER);
+    text("0%", w*.25, h*.075);
+    textAlign(RIGHT, CENTER);
+    text("100%", w*.75, h*0.075);
+    pop();
 
     // work out exp acc
     expAcc = Math.round(expAccs.reduce(function(a, b){return a + b})/expAccs.length * 1000)/10;
