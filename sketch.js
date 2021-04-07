@@ -11,7 +11,7 @@ var whi = [236, 240, 241];
 var blk = [44 , 62 , 80];
 
 // target params
-let numTargSlider, targDistSlider, resetButton;
+let numTargSlider, targDistSlider, resetButton, heatmapButton;
 var minTargs = 2;
 var maxTargs = 15; 
 var steps = 360/minTargs;
@@ -49,6 +49,10 @@ dDims[1] = dDims[0] / dRatio;
 // mouse settings 
 var locked = false;
 
+// heat map settings 
+var res = 8;
+var heatmap = false;
+
 // load images
 function preload() {
     blueT = loadImage("img/blueTrough_177_99.png");
@@ -72,6 +76,10 @@ function setup() {
     resetButton = createButton("Reset Position");
     resetButton.position(w*.04, h*.14);
     resetButton.mouseClicked(resetPos);
+
+    heatmapButton = createButton("Heatmap");
+    heatmapButton.position(w*.04, h*.18);
+    heatmapButton.mouseClicked(toggleHeat);
 
 }
 
@@ -102,7 +110,7 @@ function draw(){
         var ang = ((i * steps)/180)*Math.PI;
         var x = (targDistSlider.value()/2 * Math.cos(ang)) + w/2;
         var y = (targDistSlider.value()/2 * Math.sin(ang)) + h/2;
-        
+
         // push the distances to a list
         targs.push(dist(x, y, donkey.x, donkey.y));
         targX.push(x);
@@ -113,28 +121,49 @@ function draw(){
     
     // loop through all points in the cirle
     // colour each point based on expAcc
-    for(let x = cWbound; x < w - cWbound; x+=15){
-        for(let y = cHbound; y < h-cHbound; y+=15){
-            var distance = dist(x, y, w/2, h/2);
-            if(distance < areaR/2){
-                var tempCol = [];
-                for(let i = 0; i < targs.length; i++){
-                    tempCol.push(ExpectedAcc(dist(x, y, targX[i], targY[i])));
+    if(heatmap){
+        for(let x = cWbound; x < w - cWbound; x+=res){
+            for(let y = cHbound; y < h-cHbound; y+=res){
+                var distance = dist(x, y, w/2, h/2);
+                if(distance < areaR/2){
+                    var tempCol = [];
+                    for(let i = 0; i < targs.length; i++){
+                        tempCol.push(ExpectedAcc(dist(x, y, targX[i], targY[i])));
+                    }
+                    var tempAcc = tempCol.reduce(function(a, b){return a + b})/tempCol.length;
+                    push()
+                    colorMode(HSB);
+                    strokeWeight(res);
+                    stroke(map(tempAcc, 0, 1, 0, 360), 90, 80);
+                    point(x, y);
+                    pop();
                 }
-                var tempAcc = tempCol.reduce(function(a, b){return a + b})/tempCol.length;
-                push()
-                colorMode(HSB);
-                strokeWeight(15);
-                stroke(map(tempAcc, 0, 1, 0, 300), 90, 80);
-                point(x, y);
-                pop();
             }
         }
+        // draw a scale 
+        for(let i = 0; i < 101; i++){
+            push();
+            colorMode(HSB);
+            noStroke();
+            fill(map(i, 0, 100, 0, 359), 90, 90);
+            rect(w*.25 + i*((w*.5)/100), h*.05, (w*.5)/100, 10);
+            pop();
+        }
+        push();
+        noStroke();
+        fill(blk);
+        textAlign(CENTER, CENTER);
+        text("Probability of Reaching Target", w/2, h*.025)
+        textAlign(LEFT, CENTER);
+        text("0%", w*.25, h*.075);
+        textAlign(RIGHT, CENTER);
+        text("100%", w*.75, h*0.075);
+        pop();
     }
 
     for(let i = 0; i < targs.length; i++){
         // show images
-        stroke(gry)
+        stroke(blk)
         line(targX[i], targY[i], donkey.x, donkey.y);
         push();
         push();
@@ -143,25 +172,6 @@ function draw(){
         pop();
     }
 
-    // draw a scale 
-    for(let i = 0; i < 101; i++){
-        push();
-        colorMode(HSB);
-        noStroke();
-        fill(map(i, 0, 100, 0, 300), 90, 90);
-        rect(w*.25 + i*((w*.5)/100), h*.05, (w*.5)/100, 10);
-        pop();
-    }
-    push();
-    noStroke();
-    fill(blk);
-    textAlign(CENTER, CENTER);
-    text("Probability of Reaching Target", w/2, h*.025)
-    textAlign(LEFT, CENTER);
-    text("0%", w*.25, h*.075);
-    textAlign(RIGHT, CENTER);
-    text("100%", w*.75, h*0.075);
-    pop();
 
     // work out exp acc
     expAcc = Math.round(expAccs.reduce(function(a, b){return a + b})/expAccs.length * 1000)/10;
@@ -190,9 +200,18 @@ class Agent {
     }   
 }
 
+// functions
 function resetPos() {
     donkey.x = w/2;
     donkey.y = h/2;
+}
+
+function toggleHeat() {
+    if(heatmap){
+        heatmap = false;
+    } else {
+        heatmap = true;
+    }
 }
 
 // work out chance 
