@@ -50,7 +50,7 @@ dDims[1] = dDims[0] / dRatio;
 var locked = false;
 
 // heat map settings 
-var res = 6;
+var res = 10;
 var heatmap = false;
 
 // load images
@@ -80,7 +80,7 @@ function setup() {
     heatmapButton = createButton("Heatmap");
     heatmapButton.position(w*.04, h*.18);
     heatmapButton.mousePressed(toggleHeat);
-    heatmapButton.mouseReleased(toggleHeat);
+    // heatmapButton.mouseReleased(toggleHeat);
 
 }
 
